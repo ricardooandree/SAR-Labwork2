@@ -48,7 +48,7 @@ app.use('api/items',jwt({
 app.use('api/users',jwt({
             secret:secret,
             algorithms: ['HS256']
-}));// set up authentication for HTTP requests to "/newitem" url
+})); //set up authentication for HTTP requests to "/newitem" url
 
 // Set our api routes
 app.post('/api/authenticate', routes.Authenticate); //route to deal with the post of the authentication form
@@ -79,6 +79,7 @@ mongoose.connection.on('error', function() {
   process.exit(1);
 });
 mongoose.connection.on('connected', function () {
+  mongoose.set('strictQuery', false);
   console.log('Mongoose connected to ' + databaseUri);
 });
 

@@ -80,25 +80,13 @@ ngOnInit(): void {
         },
         error: error => this.errorMessage = <any>error });
 
-     // AAA -> getUsers para o googleMaps
+     // Get initial list of logged in users for googleMaps using http call in the auctionservice
       this.auctionservice.getUsers()
         .subscribe({
           next: result => {
           let receiveddata = result as User[]; // cast the received data as an array of items (must be sent like that from server)
             console.log("getUsers Auction Component -> received the following users: ", receiveddata);
-          this.users = receiveddata;
-          this.centerLat = this.signinservice.latitude;
-          this.centerLong = this.signinservice.longitude;
-
-          this.mapOptions = {
-            center: { lat: this.centerLat, lng: this.centerLong },
-            zoom: 10
-          };
-          console.log("getUsers Auction Component -> center coordinates: ", this.centerLat, this.centerLong);
-
-          for (let user of this.users) {
-            this.markers.push(new Marker( {lat: user.latitude, lng: user.longitude}, user.username));
-          }
+          // do the rest of the needed processing here
         },
         error: error => this.errorMessage = <any>error });
 
@@ -115,101 +103,11 @@ ngOnInit(): void {
                         }
                       );
 
-  //subscribe to the new item event that must be sent from the server when a client publishes a new item
-    const newItemSubscription = this.socketservice.getEvent("new:item")
-                      .subscribe(
-                        data =>{
-                          let receiveddata = data as Item;
-                          if (this.items){
-                            //console.log("New item: ", receiveddata);
-                            let has = false;
-
-                            for (var item of this.items) {
-                              if (item.description == receiveddata.description)
-                                has = true;
-                            }
-                            if(!has){
-                              this.items.push(receiveddata);
-                            }
-                          }
-                        }
-                      );
-
-    const removeItemSubscription = this.socketservice.getEvent("remove:item")
-      .subscribe(
-        data =>{
-          let receiveddata = data as Item;
-          if (this.items) {
-            let has = false;
-            let index = 0;
-
-            for (var item of this.items) {
-              index++;
-              if (item.description == receiveddata.description) {
-                has = true;
-                this.items.splice(index, 1); // Remove from array (starting index, number of items to remove)
-              }
-            }
-          }
-        }
-      );
-
-      const receiveMessage = this.socketservice.getEvent("receive:message")
-      .subscribe(
-        data =>{
-          let receiveddata = data as Chat;
-          console.log("receive:message with data ",receiveddata); 
-          if (receiveddata.receiver.localeCompare(this.userName)==0){
-            this.showMessage =true; //show message pane
-            this.destination = receiveddata.sender; // destination becomes the sender of the last message 
-            this.chats.push(receiveddata); 
-          } 
-
-        }
-      );
-
-
-
+  //subscribe to the new user logged in event that must be sent from the server when a client logs in 
+  //subscribe to the user logged out event that must be sent from the server when a client logs out 
+  //subscribe to a receive:message event to receive message events sent by the server 
   //subscribe to the item sold event sent by the server for each item that ends.
-    const soldItemSubscription = this.socketservice.getEvent("sold:item")
-    .subscribe(
-      data =>{
-        let receiveddata = data as Item;
-        if (this.items) {
-          let has = false;
-          let index = 0;
-
-          for (var item of this.items) {
-            index++;
-            if (item.description == receiveddata.description) {
-              has = true;
-              this.items.splice(index, 1); // Remove from array (starting index, number of items to remove)
-            }
-          }
-          if (receiveddata.wininguser == null) {
-            this.message = "No bids on item: " + receiveddata.description;
-          }
-          else {
-            this.message = receiveddata.wininguser + " won the bid for item: " + receiveddata.description;
-          }
-          if (this.counter<11)
-          {
-            this.soldHistory[this.counter++] = this.message;
-          }
-          else
-          {
-          for(let i=0; i<11; i++)
-          {
-            this.soldHistory[i] = this.soldHistory[i+1];
-          }
-          this.soldHistory[10]=this.message;
-          console.log(this.soldHistory);
-          }
-          this.showBid = false; // makes the bid form disappear
-        }
-      }
-    );
-
+    
   //subscription to any other events must be performed here inside the ngOnInit function
 
   }
@@ -241,31 +139,19 @@ ngOnInit(): void {
   }
 
   //function called when a received message is selected. 
-
   onMessageSender(ClickedChat: Chat) {
-
-    this.destination = ClickedChat.sender; //destination is now the sender of the selected received message. 
+    //destination is now the sender of the selected received message. 
   }
 
   // function called when the submit bid button is pressed
    submit(){
   	console.log("submitted bid = ", this.bidForm.value.bid);
   	//send an event using the websocket for this use the socketservice
-     this.selectedItem.currentbid = this.bidForm.value.bid;
-     this.selectedItem.wininguser = this.userName;
-     this.socketservice.sendEvent("send:bid", this.selectedItem);
+    // example :  this.socketservice.sendEvent('eventname',eventdata);
   }
-  //function called when the user sends a message to the item owner
+  //function called when the user presses the send message button
   sendMessage(){
     console.log("Message  = ", this.ChatMessage);
-    let ChatMessage: Chat; 
-    if (this.selectedItem) {
-      ChatMessage = new Chat(this.userName,this.ChatMessage,this.selectedItem.owner);
-    }
-    else {
-      ChatMessage = new Chat(this.userName,this.ChatMessage,this.destination);
-    }
-    this.socketservice.sendEvent("send:message", ChatMessage);
   }
 
   //function called when the cancel bid button is pressed.
@@ -281,18 +167,9 @@ ngOnInit(): void {
    	});
    	this.message= this.userName + " please press the Submit Bid button to procced with the Buy now order.";
    }
-
+//function called when the remove item button is pressed.
   removeItem() {
-     this.auctionservice.removeItem(this.selectedItem)
-       .subscribe({
-         next: result => {
-           console.log ('remove item succcessfully',result);
-           this.showBid = false; // makes the bid form disappear
-         }, //callback to cath errors thrown by the Observable in the service
-         error: error => {
-           this.errorMessage = <any>error;
-         }
-        });
+  //use an HTTP call to the API to remove an item using the auction service.
    }
 
 }
