@@ -1,0 +1,28 @@
+{
+  "name": "auction22",
+  "version": "1.0.0",
+  "description": "Auction app second project SAR",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Pedro Amaral",
+  "license": "ISC",
+  "dependencies": {
+    "@angular/cli": "^13.3.2",
+    "async": "^3.2.3",
+    "body-parser": "^1.20.0",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "express": "^4.17.3",
+    "express-jwt": "^6.1.1",
+    "mongoose": "^6.2.10",
+    "morgan": "^1.10.0",
+    "serve-favicon": "^2.5.0",
+    "socketio-jwt": "^4.6.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15"
+  }
+}
