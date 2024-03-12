@@ -2,7 +2,7 @@
  * api code file
  */
 
-const socketioJwt = require('socketio-jwt'); //to deal with authentication based in tokens -  WebSocket
+const jwt = require('jsonwebtoken'); //to deal with authentication based in tokens 
 const user = require('../models/user.js'); //database use model
 const item = require('../models/item.js');
 const secret = 'this is the secret secret secret 12356'; // same secret as in api.js used here to verify the authentication token
@@ -54,11 +54,32 @@ exports.UserLoggedOutBroadcast = function (loggedOutUser) {
 exports.StartSocket = (io) => {
 
     ioSocket = io; // store socket object for use in interval (timer) function
+    
+    io.use((socket, next) => {
+        if (socket.handshake.query && socket.handshake.query.token) {
+            jwt.verify(socket.handshake.query.token, secret, function (err, decoded) {
+                if (err) return next(new Error('Authentication error'));
+                socket.decoded_token = decoded;
+                next();
+            });
+        } else {
+            next(new Error('Authentication error'));
+        }
+    });
 
-    io.use(socketioJwt.authorize({
-        secret: secret,
-        handshake: true
-    }));
+    //set up jwt authentication in the socket
+    io.use((socket, next) => {
+      if (socket.handshake.query && socket.handshake.query.token){
+        jwt.verify(socket.handshake.query.token, secret, function(err, decoded) {
+          if(err) return next(new Error('Authentication error'));
+          socket.decoded_token = decoded;
+          next();
+        });
+      } else {
+        next(new Error('Authentication error'));
+      }
+    });
+
     console.log('Socket Started!');
     io.on('connection', (socket) => {  // first time it is called is when the client connects sucessfully
 

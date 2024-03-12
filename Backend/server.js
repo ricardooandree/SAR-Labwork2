@@ -7,7 +7,7 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');//object to deal with paths
 const favicon = require('serve-favicon');
-const jwt = require('express-jwt'); //to deal with authentication based in tokens
+var { expressjwt: jwt} = require('express-jwt'); //to deal with authentication based in tokens
 const morgan = require('morgan'); // Logs each server request to the console
 const cookieParser = require('cookie-parser');
 const http = require('http');
@@ -36,27 +36,16 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, '../dist/auction-sar/')));
 app.use (favicon(path.join(__dirname,'../dist/auction-sar/favicon.ico')));
 
-//Set up URIs that require Jwt authentication
-app.use('api/newitem',jwt({
-						secret:secret,
-						algorithms: ['HS256']
-					   }));// set up authentication for HTTP requests to "/newitem" url
-app.use('api/items',jwt({
-						secret:secret,
-						algorithms: ['HS256']
-					   }));// set up authentication for HTTP requests to "/newitem" url
-app.use('api/users',jwt({
-            secret:secret,
-            algorithms: ['HS256']
-})); //set up authentication for HTTP requests to "/newitem" url
+// JWT middleware
+const protectJwt = jwt({ secret: secret, algorithms: ['HS256'] });
 
 // Set our api routes
 app.post('/api/authenticate', routes.Authenticate); //route to deal with the post of the authentication form
 app.post('/api/newuser', routes.NewUser); //route to deal with the post of the register form
-app.post('/api/newitem', routes.NewItem); //route to deal with the post of the new item form
-app.get('/api/items', routes.GetItems); //route to deal with the get all items call to the api
-app.get('/api/users', routes.GetUsers); //route to deal with the get all users call to the api
-app.post('/api/removeitem', routes.RemoveItem); //route to deal with the post of the new item form
+app.post('/api/newitem', protectJwt,routes.NewItem); //route to deal with the post of the new item form needs authentication token
+app.get('/api/items', protectJwt, routes.GetItems); //route to deal with the get all items call to the api needs authentication token
+app.get('/api/users', protectJwt, routes.GetUsers); //route to deal with the get all users call to the api needs authentication token
+app.post('/api/removeitem', protectJwt, routes.RemoveItem); //route to deal with the post of the new item form needs authentication token
 
 
 // Catch all other routes and return the index file

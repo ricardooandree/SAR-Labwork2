@@ -124,7 +124,7 @@ exports.RemoveItem =  (req, res) => {
     else {
           //removed item
    }
-  });
+  });*/
 };
 /*
 GET to obtain all active items in the database
