@@ -15,26 +15,26 @@ const socket = require('./socket.js');
 exports.Authenticate =  (req, res) =>  {
   console.log('Authenticate -> Received Authentication POST');
   /* Data base findOne example:
-  user.findOne({$and:[{username: req.body.username}, {password: req.body.password}]}, (err, User) =>{
-       if (err) {
-        //there was an error in the database
-        //send  a 4*** status usinf res.status
-       }
-       if (User != null){ //user exists update to is logged = true and send token response
-       
+  user.findOne({$and:[{username: req.body.username}, {password: req.body.password}]})
+    .then(User => {
+      if (User != null){ //user exists update to is logged = true and send token response
         /* Database updateOne example
-        user.updateOne({username: req.body.username}, {$set: {islogged: true, latitude: req.body.latitude, longitude: req.body.longitude}}, (err, result) => {
-           if (err) {
-            //there was an error in the database
-           }
-           if (result) {
+        user.updateOne({username: req.body.username}, {$set: {islogged: true, latitude: req.body.latitude, longitude: req.body.longitude}})
+          .then(result => {
+            if (result) {
              //user was updated
-           }
-         });      
-       }
+            })
+          .catch(err => {
+            // Handle the error here. For example, you might want to send an error code response to the client.
+          });      
+      }
        else {  
          //user does not exist
-       }
+        }
+    })
+    .catch(err => {
+      //there was an error in the database
+      //send  a 5*** status using res.status   
     }); */
     var token = jwt.sign(req.body, secret);
     res.json({username: req.body.username, token: token});  
@@ -51,25 +51,25 @@ exports.NewUser =  (req, res) => {
 // check if username already exists
 //If it still does not exist
 //create a new user
-/*database create example
-      user.create({ name : req.body.name, email : req.body.email, username: req.body.username,
-        password: req.body.password, islogged: false, latitude: 0, longitude: 0 } , (err, newUser) => {
-        if (err) {
-          //database error occurred
-        } else {
-          //created a new user here is how to send a JSON object with the user to the client
-          res.json({
-            name: newUser.name,
-            email: newUser.email,
-            username: newUser.username,
-            password: newUser.password,
-            latitude: newUser.latitude,
-            longitude: newUser.longitude
-          });
-          console.log("NewUser -> DB Inserted.");
-          //sends back a client user Type object (does not have the isLogged field) corresponding to the logged in user
-        }
-      }); */
+//database create example
+/*user.create({ name : req.body.name, email : req.body.email, username: req.body.username, password: req.body.password, 
+  islogged: false, latitude: 0,longitude: 0})
+.then(newUser => {
+  //created a new user here is how to send a JSON object with the user to the client
+  res.json({
+    name: newUser.name,
+    email: newUser.email,
+    username: newUser.username,
+    password: newUser.password,
+    latitude: newUser.latitude,
+    longitude: newUser.longitude
+  });
+  console.log("NewUser -> DB Inserted.");
+  //sends back a client user Type object (does not have the isLogged field) corresponding to the logged in user
+})
+.catch(err => {
+  //database error occurred
+});*/
 
   //reply with the created user in a JSON object (for now is filled with dummy values
    res.json({
@@ -89,17 +89,21 @@ exports.NewItem =  (req, res) => {
   console.log("NewItem -> received form submission new item");
 	console.log(req.body);
 //check if item already exists using the description field if not create item;
-  /*   item.findOne({...}, (err, ExistingItem) =>{
-            if (err) {
-                //there was an error in the database
-            }
+  /*   item.findOne({ * your query here * })
+           .then(existingItem => {
+            // existingItem is the item that was found, or null if no item was found
             if (ExistingItem != null){ //item exists
             }
             else {
                 //item does not exist
                 item.create({...
             }
-       });*/
+          })
+          .catch(err => {
+            console.error('An error occurred:', err);
+            // Handle the error here. For example, you might want to send a response to the client.
+              res.status(500).send('An error occurred while trying to find the item.');
+          });*/
   // send the Item as a response in the format of the Item.ts class in the client code (for now with dummy values)
   res.json({
     description: "somedescription",
@@ -117,14 +121,15 @@ exports.RemoveItem =  (req, res) => {
   console.log(req.body);
   //check if item already exists using the description field if it exists delete it;
   /* database remove example
-  item.remove({description : req.body.description} , (err) => {
-    if (err) {
-          //database error occurred
-    }
-    else {
-          //removed item
-   }
-  });*/
+  item.remove({description : req.body.description})
+    .then(() => {
+    // The item was successfully removed
+    })
+    .catch(err => {
+      console.error('An error occurred:', err);
+      // Handle the error here. For example, you might want to send a response to the client.
+      res.status(500).send('An error occurred while trying to remove the item.');
+    });*/
 };
 /*
 GET to obtain all active items in the database
