@@ -69,10 +69,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "auctionSAR:build:production"
+              "buildTarget": "auctionSAR:build:production"
             },
             "development": {
-              "browserTarget": "auctionSAR:build:development"
+              "buildTarget": "auctionSAR:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -80,7 +80,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "auctionSAR:build"
+            "buildTarget": "auctionSAR:build"
           }
         },
         "test": {
@@ -104,7 +104,6 @@
       }
     }
   },
-  "defaultProject": "auctionSAR",
   "cli": {
     "analytics": "b224aab6-32c1-4b5b-870d-5c4efbe329fd"
   }
