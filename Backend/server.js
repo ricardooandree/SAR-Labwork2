@@ -62,7 +62,7 @@ app.use(function(req, res, next) {
 
 //connect to the database
 
-mongoose.connect(databaseUri,{useNewUrlParser: true, useUnifiedTopology: true}); // Connects to your MongoDB.  Make sure mongod is running!
+mongoose.connect(databaseUri); // Connects to your MongoDB.  Make sure mongod is running!
 mongoose.connection.on('error', function() {
   console.log('MongoDB Connection Error. Please make sure that MongoDB is running.');
   process.exit(1);
