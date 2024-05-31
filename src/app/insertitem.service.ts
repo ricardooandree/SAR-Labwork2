@@ -16,7 +16,7 @@ export class InsertitemService {
   // Http POST call to the api to submit the new user data returns a boolean observer to indicate success
   submitNewItem (item: any) {
   
-    let headers = new HttpHeaders({ 'Authorization': 'Bearer ' + this.signinservice.token }); // insert tokern in the requests
+    let headers = new HttpHeaders({ 'Authorization': 'Bearer ' + this.signinservice.token.token }); // insert token in the requests
     let options = { headers: headers };
                
     return this.http.post<any>(this.newitemUrl, item, options)

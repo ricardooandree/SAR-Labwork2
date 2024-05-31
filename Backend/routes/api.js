@@ -1,5 +1,5 @@
-/**
- * api code file
+/*
+ * API code file
  */
 const express = require('express');
 const jwt = require('jsonwebtoken');
@@ -9,12 +9,49 @@ const secret = 'this is the secret secret secret 12356'; // same secret as in so
 //get the file with the socket api code
 const socket = require('./socket.js');
 
+
 /*
  * POST User sign in. User Sign in POST is treated here
  */
-exports.Authenticate =  (req, res) =>  {
+exports.Authenticate = (req, res) => {
+  // TODO-DONE: WEEK 2 - Implement the authentication method
   console.log('Authenticate -> Received Authentication POST');
-  /* Data base findOne example:
+
+  user.findOne({ $and:[{ username: req.body.username }, { password: req.body.password }]})
+    .then(User => {
+      // User exists - update logged status and send response token
+      if (User != null) {
+        user.updateOne({ username: req.body.username }, { $set: { islogged: true, latitude: req.body.latitude, longitude: req.body.longitude } })
+          .then(result => {
+
+            if (result) {
+              // user exists and status updated to islogged
+              // NOTE: ORIGINAL CODE
+              console.log('User is logged with due latitude and longitude');
+              var token = jwt.sign(req.body, secret);
+              res.json({ username: req.body.username, token: token }); 
+            }
+
+          })
+          .catch(err => {
+            // Error handling
+            console.error('Error updating the user status', err);
+            res.status(500).send('An error occurred while trying to update the user status');
+          });
+
+      } else {
+        // User does not exist
+        console.log('User does not exist - Unauthorized access');
+        res.status(401).send('User does not exist');
+      }
+    })
+    .catch(err => {
+      // Error handling
+      console.error('Error finding the user', err);
+      res.status(500).send('An error occurred while trying to find the user');
+    });
+};
+  /* Database find One example:
   user.findOne({$and:[{username: req.body.username}, {password: req.body.password}]})
     .then(User => {
       if (User != null){ //user exists update to is logged = true and send token response
@@ -36,22 +73,55 @@ exports.Authenticate =  (req, res) =>  {
       //there was an error in the database
       //send  a 5*** status using res.status   
     }); */
-    var token = jwt.sign(req.body, secret);
-    res.json({username: req.body.username, token: token});  
-    console.log('Authenticate -> Received Authentication POST');
-};
+
 
 /*
  * POST User registration. User registration POST is treated here
  */
-exports.NewUser =  (req, res) => {
+exports.NewUser = (req, res) => {
+  // TODO-DONE: WEEK 2 - Implement the user registration method
   console.log("NewUser -> received form submission new user");
   console.log(req.body);
 
-// check if username already exists
-//If it still does not exist
-//create a new user
-//database create example
+  // Check if username already exists
+  user.findOne({ username: req.body.username })
+    .then(existingUser => {
+
+      if (existingUser != null) {
+        // Username already exists
+        console.log('Username already exists');
+        res.status(500).send('Username already exists');
+
+      } else {
+        // Username doesnt exist - create a new user
+        // FIXME: Need to add the islogged field to the user object
+        user.create({
+          name: req.body.name, 
+          email: req.body.email, 
+          username: req.body.username, 
+          password: req.body.password, 
+          islogged: false, 
+          latitude: 0, 
+          longitude: 0 })
+          .then(newUser => {
+            // Send new user as a JSON object to the client
+            res.json(newUser);
+
+            console.log('New User -> DB Inserted');
+            
+          })
+          .catch(err => {
+            console.error('Error creating a new user', err);
+            res.status(500).send('An error occurred while trying to create a new user');
+          })
+      }
+    })
+    .catch(err => {
+      console.error('Error finding the user', err);
+      res.status(500).send('An error occurred while trying to find the user');
+    })
+};
+
 /*user.create({ name : req.body.name, email : req.body.email, username: req.body.username, password: req.body.password, 
   islogged: false, latitude: 0,longitude: 0})
 .then(newUser => {
@@ -71,6 +141,7 @@ exports.NewUser =  (req, res) => {
   //database error occurred
 });*/
 
+  /*
   //reply with the created user in a JSON object (for now is filled with dummy values
    res.json({
     name: "somename",
@@ -80,14 +151,59 @@ exports.NewUser =  (req, res) => {
     latitude: 19.09,
     longitude: 34
    });
-};
+   */
+
+
 
 /*
  * POST Item creation. Item creation POST is treated here
  */
-exports.NewItem =  (req, res) => {
+exports.NewItem = (req, res) => {
+  // TODO-DONE: WEEK 2 - Implement the item creation method  
   console.log("NewItem -> received form submission new item");
 	console.log(req.body);
+
+  // Check if item already exists
+  item.findOne({ description: req.body.description })
+    .then(existingItem => {
+      
+      if (existingItem != null) {
+        // Item already exists
+        console.log('Item already exists');
+        res.status(500).send('Item already exists');
+
+      } else {
+        // Item doesnt exist - create a new item
+        item.create({
+          description: req.body.description, 
+          currentbid: req.body.currentbid, 
+          remainingtime: req.body.remainingtime, 
+          buynow: req.body.buynow, 
+          wininguser: "", 
+          sold: false, 
+          owner: req.body.owner, 
+          id: req.body.id })
+          .then(newItem => {
+            // Sends back a client item Type object 
+            res.json(newItem);
+
+            console.log('New Item -> DB Inserted');
+            console.log(newItem);
+            console.log('Remaining time: ', req.remainingtime);
+          })
+          .catch(err => {
+            console.error('Error creating a new item', err);
+            res.status(500).send('An error occurred while trying to create a new item');
+          })
+      }
+    })
+    .catch(err => {
+      console.error('Error finding a new item', err);
+      res.status(500).send('An error occurred while trying to find the item');
+    })
+
+};
+
 //check if item already exists using the description field if not create item;
   /*   item.findOne({ * your query here * })
            .then(existingItem => {
@@ -105,20 +221,56 @@ exports.NewItem =  (req, res) => {
               res.status(500).send('An error occurred while trying to find the item.');
           });*/
   // send the Item as a response in the format of the Item.ts class in the client code (for now with dummy values)
+
+  /*
   res.json({
     description: "somedescription",
     currentbid: "somecurrentbid",
     remainingtime: "someremainingtime",
     wininguser: "somewininguser"
     });
-};
+    */
+   
+
 
 /*
  * POST Item removal. Item removal POST is treated here
  */
-exports.RemoveItem =  (req, res) => {
+exports.RemoveItem = (req, res) => {
+  // TODO-DONE: WEEK 2 - Implement the item removal method
   console.log("RemoveItem -> received form submission remove item");
   console.log(req.body);
+
+  // Check if item already exists
+  item.findOne({ description: req.body.description })
+    .then(existingItem => {
+
+      if (existingItem != null) {
+        // Item exists - remove
+        item.deleteOne({ description: req.body.description })
+          .then(() => {
+            console.log('Item removed successfully');
+            res.status(200).send('Item removed successfully');
+
+          })
+        .catch(err => {
+          console.error('An error occurred:', err);
+          res.status(500).send('An error occurred while trying to remove the item');
+        });
+
+      } else {
+        // Item doesn't exist - can't remove
+        console.error('Item does not exist', err);
+        res.status(500).send('Item does not exist');
+
+      }
+    })
+    .catch(err => {
+      console.error('Error creating a new item', err);
+      res.status(500).send('An error occurred while trying to find the item.');
+    })
+
+};
   //check if item already exists using the description field if it exists delete it;
   /* database remove example
   item.remove({description : req.body.description})
@@ -130,12 +282,38 @@ exports.RemoveItem =  (req, res) => {
       // Handle the error here. For example, you might want to send a response to the client.
       res.status(500).send('An error occurred while trying to remove the item.');
     });*/
-};
-/*
-GET to obtain all active items in the database
-*/
-exports.GetItems = (req, res) => {
 
+
+
+/*
+ * GET to obtain all active items in the database
+ */
+exports.GetItems = (req, res) => {
+  // TODO-DONE: WEEK 3 - Implement the get items method
+
+  // Find all unsol items in the database and send back to the client
+  item.find({ sold: false })
+    .then(Items => {
+
+      if (Items != null && Items.length > 0) {
+        // Items exist
+        console.log('received get Items call responded with:', Items);
+        res.json(Items);
+
+      } else {
+        // Items don't exist
+        console.error('No items found');
+        res.status(500).send('No items found');
+      }
+    })
+    .catch(err => {
+      // Error Handling
+      console.error('Error finding the items', err);
+      res.status(500).send('An error occurred while trying to find the items');
+    });
+
+};
+  /*
   // Dummy items just for example you should send the items that exist in the database use find instead of findOne
   let item1 = new item({description:'Smartphone',currentbid:250, remainingtime:120, buynow:1000, wininguser:'dummyuser1'});
   let item2 = new item({description:'Tablet',currentbid:300, remainingtime:120, buynow:940, wininguser:'dummyuser2'});
@@ -143,11 +321,39 @@ exports.GetItems = (req, res) => {
   let Items = [item1,item2,item3];
   res.json(Items); //send array of existing active items in JSON notation
   console.log ("received get Items call responded with: ", Items);
+  */
 
-}
 
+
+/*
+ * GET to obtain all logged users in the database
+ */
 exports.GetUsers = (req, res) => {
-  //use find to get all islogged: true users in ths database and send back to client
-  res.status(200).send('OK'); //for now it sends just a 200 Ok like if no users are logged in
-}
+  // TODO-DONE: WEEK 3 - Implement the get users method
+
+  // Find all logged users in the database and send back to the client
+  user.find({ islogged: true })
+  .then(Users => {
+
+    if (Users != null && Users.length > 0) {
+      // Users exist
+      console.log('received get Users call responded with:', Users);
+      res.json(Users);
+
+    } else {
+      // Users don't exist
+      console.error('No users found');
+      res.status(500).send('No users found');
+    }
+
+  })
+  .catch(err => {
+    // Error handling
+    console.error('Error finding the users', err);
+    res.status(500).send('An error occurred while trying to find the users');
+  });
+
+};
+
+//res.status(200).send('OK'); //for now it sends just a 200 Ok like if no users are logged in
 
